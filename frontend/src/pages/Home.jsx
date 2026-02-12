@@ -14,6 +14,7 @@ import {
 
 const Home = () => {
   const [activeFeature, setActiveFeature] = useState(0);
+  const [showProfile, setShowProfile] = useState(false);
 
   const features = [
     {
@@ -40,23 +41,63 @@ const Home = () => {
     <div className="min-h-screen bg-slate-950 text-white">
       {/* NAVIGATION */}
       <nav className="px-6 py-6 flex justify-between items-center max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-cyan-400 to-blue-500 p-2 rounded-2xl">
-            <Headphones className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            SonicLearn
-          </span>
-        </div>
+  
+  {/* LEFT SIDE - Logo */}
+  <div className="flex items-center gap-3">
+    <div className="bg-gradient-to-br from-cyan-400 to-blue-500 p-2 rounded-2xl">
+      <Headphones className="w-6 h-6 text-white" />
+    </div>
+    <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+      Chronomind
+    </span>
+  </div>
 
-        <div className="hidden md:flex gap-8 items-center">
-          <a href="#features" className="text-slate-300 hover:text-cyan-400">Features</a>
-          <a href="#how" className="text-slate-300 hover:text-cyan-400">How It Works</a>
-          <button className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full font-semibold hover:scale-105 transition">
-            Get Started
+  {/* RIGHT SIDE - Navigation + Profile */}
+  <div className="hidden md:flex items-center gap-8 relative">
+    
+    <a href="#features" className="text-slate-300 hover:text-cyan-400">
+      Features
+    </a>
+
+    <a href="#how" className="text-slate-300 hover:text-cyan-400">
+      How It Works
+    </a>
+
+    {/* Profile */}
+    <div className="relative">
+      <button
+        onClick={() => setShowProfile(!showProfile)}
+        className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center font-bold"
+      >
+        SK
+      </button>
+
+      {showProfile && (
+        <div className="absolute right-0 mt-3 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-xl p-3 space-y-2">
+          <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 transition">
+            My Profile
+          </button>
+
+          <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 transition">
+            Dashboard
+          </button>
+
+          <button
+            className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-500/20 text-red-400 transition"
+            onClick={() => {
+              localStorage.removeItem("token");
+              window.location.href = "/";
+            }}
+          >
+            Logout
           </button>
         </div>
-      </nav>
+      )}
+    </div>
+
+  </div>
+</nav>
+
 
       {/* HERO */}
       <section className="px-6 pt-20 pb-32 max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
