@@ -15,6 +15,8 @@ import {
 const Home = () => {
   const [activeFeature, setActiveFeature] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
+  const [topic, setTopic] = useState("");
+  const [file, setFile] = useState(null);
 
   const features = [
     {
@@ -136,11 +138,43 @@ const Home = () => {
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-3xl p-8 shadow-2xl">
           <h3 className="text-2xl font-bold mb-6">Quick Convert</h3>
 
-          <div className="border-2 border-dashed border-slate-600 rounded-2xl p-12 text-center hover:border-cyan-500 transition cursor-pointer">
-            <FileText className="w-10 h-10 mx-auto mb-4 text-cyan-400" />
-            <p className="font-semibold">Drop your document here</p>
-            <p className="text-sm text-slate-400">PDF, DOCX, TXT</p>
-          </div>
+          <div className="space-y-6">
+
+  {/* Upload Section */}
+  <label className="border-2 border-dashed border-slate-600 rounded-2xl p-12 text-center hover:border-cyan-500 transition cursor-pointer block">
+    <input
+      type="file"
+      className="hidden"
+      onChange={(e) => setFile(e.target.files[0])}
+    />
+
+    <FileText className="w-10 h-10 mx-auto mb-4 text-cyan-400" />
+    <p className="font-semibold">
+      {file ? file.name : "Drop your document here"}
+    </p>
+    <p className="text-sm text-slate-400">
+      PDF, DOCX, TXT
+    </p>
+  </label>
+
+  {/* OR Divider */}
+  <div className="flex items-center gap-4">
+    <div className="flex-1 h-px bg-slate-700"></div>
+    <span className="text-slate-400 text-sm">OR</span>
+    <div className="flex-1 h-px bg-slate-700"></div>
+  </div>
+
+  {/* Topic Input */}
+  <input
+    type="text"
+    placeholder="Enter topic name (e.g., Machine Learning Basics)"
+    value={topic}
+    onChange={(e) => setTopic(e.target.value)}
+    className="w-full p-4 rounded-xl bg-slate-800 border border-white/10 focus:border-cyan-500 outline-none"
+  />
+
+</div>
+
 
           <div className="grid grid-cols-2 gap-4 mt-6">
             <button className="p-4 bg-slate-800 rounded-xl hover:bg-slate-700 transition text-left">
