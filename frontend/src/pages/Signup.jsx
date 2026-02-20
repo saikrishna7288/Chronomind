@@ -1,21 +1,36 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Headphones } from "lucide-react";
+import { useState } from "react";
+import axios from "axios";
 
 const Signup = () => {
   const navigate = useNavigate();
 
-  const handleSignup = (e) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSignup = async (e) => {
     e.preventDefault();
 
-    // TEMP: redirect after signup
-    navigate("/Home");
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/Signup",
+        { name, email, password }
+      );
+
+      localStorage.setItem("token", res.data.token);
+      navigate("/Home");
+
+    } catch (error) {
+      alert(error.response?.data?.message || "Signup Failed");
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-6 text-white">
       <div className="bg-slate-900 border border-white/10 rounded-3xl p-10 w-full max-w-md shadow-2xl">
-        
-        {/* Logo */}
+
         <div className="flex items-center gap-3 mb-8 justify-center">
           <div className="bg-gradient-to-br from-cyan-400 to-blue-500 p-2 rounded-2xl">
             <Headphones className="w-6 h-6 text-white" />
@@ -34,26 +49,32 @@ const Signup = () => {
             type="text"
             placeholder="Full Name"
             required
-            className="w-full p-4 rounded-xl bg-slate-800 border border-white/10 focus:border-cyan-500 outline-none"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-4 rounded-xl bg-slate-800 border border-white/10"
           />
 
           <input
             type="email"
             placeholder="Email"
             required
-            className="w-full p-4 rounded-xl bg-slate-800 border border-white/10 focus:border-cyan-500 outline-none"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-4 rounded-xl bg-slate-800 border border-white/10"
           />
 
           <input
             type="password"
             placeholder="Password"
             required
-            className="w-full p-4 rounded-xl bg-slate-800 border border-white/10 focus:border-cyan-500 outline-none"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-4 rounded-xl bg-slate-800 border border-white/10"
           />
 
           <button
             type="submit"
-            className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold hover:scale-105 transition"
+            className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold"
           >
             Sign Up
           </button>

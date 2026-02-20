@@ -181,39 +181,7 @@ const Home = () => {
             <Mic2 className="w-5 h-5" />
             Generate Audio
           </button>
-          {/* Audio Mode Selection */}
-      <div className="grid grid-cols-2 gap-4 mt-6">
-        {/* Headphone Mode */}
-        <button
-          onClick={() => setAudioMode("headphone")}
-          className={`p-4 rounded-xl border transition ${
-            audioMode === "headphone"
-              ? "border-cyan-500 bg-cyan-500/10"
-              : "border-white/10 bg-slate-800 hover:bg-slate-700"
-          }`}
-        >
-          <div className="flex flex-col items-center gap-2">
-            <Headphones className="w-6 h-6 text-cyan-400" />
-            <span className="font-semibold">Headphone</span>
-          </div>
-        </button>
-
-        {/* Speaker Mode */}
-        <button
-          onClick={() => setAudioMode("speaker")}
-          className={`p-4 rounded-xl border transition ${
-            audioMode === "speaker"
-              ? "border-cyan-500 bg-cyan-500/10"
-              : "border-white/10 bg-slate-800 hover:bg-slate-700"
-          }`}
-        >
-          <div className="flex flex-col items-center gap-2">
-            <Music2 className="w-6 h-6 text-amber-400" />
-            <span className="font-semibold">Speaker</span>
-          </div>
-        </button>
-      </div>
-        </div>
+        </div>  
       </section>
       
 
