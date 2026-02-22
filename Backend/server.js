@@ -1,10 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
+import convertRoutes from "./routes/convertRoutes.js";
 
-dotenv.config();
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.get("/", (req, res) => {
   res.send("Chronomind Backend Running 🚀");
 });
 
+app.use("/api/convert", convertRoutes);
+
 // Connect MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
@@ -30,3 +33,5 @@ mongoose.connect(process.env.MONGO_URI)
     });
   })
   .catch((err) => console.log(err));
+
+console.log("OPENAI KEY:", process.env.OPENAI_API_KEY);
