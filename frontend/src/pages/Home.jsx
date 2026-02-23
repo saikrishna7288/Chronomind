@@ -17,7 +17,9 @@ const Home = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [topic, setTopic] = useState("");
   const [file, setFile] = useState(null);
-  const [audioMode, setAudioMode] = useState("headphone");
+  const [generatedText, setGeneratedText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState("story");
 
   const features = [
     {
@@ -41,6 +43,99 @@ const Home = () => {
       color: "from-amber-400 to-orange-500",
     },
   ];
+  // 🚀 Generate Content from Backend
+  const generateContent = async () => {
+    if (!topic) {
+      alert("Please enter a topic");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch("http://localhost:5000/api/convert", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          topic: topic,
+          mode: mode,
+        }),
+      });
+
+      const data = await response.json();
+
+      console.log("Backend Response:", data);
+
+      if (response.ok) {
+        setGeneratedText(data.generatedText);
+      } else {
+        alert(data.message || "Error generating content");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Server error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cleanTextForSpeech = (text) => {
+    return (
+      text
+        // Remove HTML tags completely
+        .replace(/<[^>]*>/g, "")
+
+        // Remove markdown symbols
+        .replace(/[#*_`~>-]/g, "")
+
+        // Remove URLs
+        .replace(/https?:\/\/\S+/g, "")
+
+        // Replace underscores with space
+        .replace(/_/g, " ")
+
+        // Remove extra symbols
+        .replace(/[{}[\]()]/g, "")
+
+        // Replace multiple new lines with pause
+        .replace(/\n+/g, ". ")
+
+        // Remove extra spaces
+        .replace(/\s+/g, " ")
+
+        .trim()
+    );
+  };
+
+  const speakText = () => {
+    if (!generatedText) {
+      alert("No content to speak.");
+      return;
+    }
+
+    const cleaned = cleanTextForSpeech(generatedText);
+
+    const intro = `Here is your lesson on ${topic}. `;
+    const finalSpeech = intro + cleaned;
+
+    const utterance = new SpeechSynthesisUtterance(finalSpeech);
+
+    utterance.rate = 0.92; // better for learning
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeech = () => {
+    window.speechSynthesis.cancel();
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
@@ -167,23 +262,62 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-6">
-            <button className="p-4 bg-slate-800 rounded-xl hover:bg-slate-700 transition text-left">
+            <button
+              onClick={() => setMode("story")}
+              className={`p-4 rounded-xl text-left transition ${
+                mode === "story"
+                  ? "bg-cyan-600 text-white"
+                  : "bg-slate-800 hover:bg-slate-700"
+              }`}
+            >
               <BookOpen className="w-6 h-6 mb-2 text-amber-400" />
               Story Mode
             </button>
-            <button className="p-4 bg-slate-800 rounded-xl hover:bg-slate-700 transition text-left">
+
+            <button
+              onClick={() => setMode("chunks")}
+              className={`p-4 rounded-xl text-left transition ${
+                mode === "chunks"
+                  ? "bg-cyan-600 text-white"
+                  : "bg-slate-800 hover:bg-slate-700"
+              }`}
+            >
               <Zap className="w-6 h-6 mb-2 text-cyan-400" />
               Quick Chunks
             </button>
           </div>
 
-          <button className="w-full mt-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:scale-105 transition">
+          <p className="text-sm text-slate-400 mt-2">
+            Selected Mode: <span className="text-cyan-400">{mode}</span>
+          </p>
+
+          <button
+            onClick={generateContent}
+            disabled={loading}
+            className="w-full mt-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:scale-105 transition disabled:opacity-50"
+          >
             <Mic2 className="w-5 h-5" />
-            Generate Audio
+            {loading ? "Generating..." : "Generate Audio"}
           </button>
-        </div>  
+
+          {/* Listen & Stop */}
+          <div className="mt-4 flex gap-3">
+            <button
+              onClick={speakText}
+              className="bg-green-500 text-white px-4 py-2 rounded"
+            >
+              🔊 Listen
+            </button>
+
+            <button
+              onClick={stopSpeech}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+              ⏹ Stop
+            </button>
+          </div>
+        </div>
       </section>
-      
 
       {/* FEATURES */}
       <section id="features" className="px-6 py-24 max-w-7xl mx-auto">
