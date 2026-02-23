@@ -34,4 +34,4 @@ mongoose.connect(process.env.MONGO_URI)
   })
   .catch((err) => console.log(err));
 
-console.log("OPENAI KEY:", process.env.OPENAI_API_KEY);
+
