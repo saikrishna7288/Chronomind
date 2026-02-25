@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRef } from "react";
 import {
   Headphones,
   Upload,
@@ -19,7 +20,13 @@ const Home = () => {
   const [file, setFile] = useState(null);
   const [generatedText, setGeneratedText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sections, setSections] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [speed, setSpeed] = useState(1);
   const [mode, setMode] = useState("story");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [speechRate, setSpeechRate] = useState(1);
+  const utteranceRef = useRef(null);
 
   const features = [
     {
@@ -72,7 +79,17 @@ const Home = () => {
       console.log("Backend Response:", data);
 
       if (response.ok) {
+        // ✅ Set full generated text
         setGeneratedText(data.generatedText);
+
+        // ✅ Clean special symbols
+        const cleaned = data.generatedText.replace(/[#*_`-]/g, "");
+
+        // ✅ Split into sections
+        const split = cleaned.split("\n").filter((line) => line.trim() !== "");
+
+        setSections(split);
+        setCurrentIndex(0);
       } else {
         alert(data.message || "Error generating content");
       }
@@ -112,31 +129,80 @@ const Home = () => {
     );
   };
 
-  const speakText = () => {
-    if (!generatedText) {
-      alert("No content to speak.");
-      return;
-    }
-
-    const cleaned = cleanTextForSpeech(generatedText);
-
-    const intro = `Here is your lesson on ${topic}. `;
-    const finalSpeech = intro + cleaned;
-
-    const utterance = new SpeechSynthesisUtterance(finalSpeech);
-
-    utterance.rate = 0.92; // better for learning
-    utterance.pitch = 1;
-    utterance.volume = 1;
+  const speakSection = (index) => {
+    if (!sections[index]) return;
 
     window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(sections[index]);
+    utterance.rate = speed;
+
+    utterance.onend = () => {
+      setIsPlaying(false);
+    };
+
+    utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  };
 
-  const stopSpeech = () => {
+    setIsPlaying(true);
+  };
+  const togglePlay = () => {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setIsPlaying(true);
+    } else {
+      window.speechSynthesis.pause();
+      setIsPlaying(false);
+    }
+  };
+  const restartSection = () => {
     window.speechSynthesis.cancel();
+    speakSection(currentIndex);
   };
+  const prevSection = () => {
+    if (currentIndex > 0) {
+      const prev = currentIndex - 1;
+      setCurrentIndex(prev);
+      speakSection(prev);
+    }
+  };
+  const nextSection = () => {
+    if (currentIndex < sections.length - 1) {
+      const next = currentIndex + 1;
+      setCurrentIndex(next);
+      speakSection(next);
+    }
+  };
+  const changeSpeed = (rate) => {
+  setSpeed(rate);
 
+  if (isPlaying) {
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(sections[currentIndex]);
+    utterance.rate = rate;
+
+    utterance.onend = () => {
+      setIsPlaying(false);
+    };
+
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+  }
+};
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      window.speechSynthesis.pause();
+      setIsPlaying(false);
+    } else {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        setIsPlaying(true);
+      } else {
+        speakSection(currentIndex);
+      }
+    }
+  };
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
       {/* NAVIGATION */}
@@ -301,21 +367,65 @@ const Home = () => {
           </button>
 
           {/* Listen & Stop */}
-          <div className="mt-4 flex gap-3">
-            <button
-              onClick={speakText}
-              className="bg-green-500 text-white px-4 py-2 rounded"
-            >
-              🔊 Listen
-            </button>
+          {sections.length > 0 && (
+            <div className="mt-6 bg-slate-900 p-6 rounded-2xl border border-white/10">
+              {/* Main Controls */}
+              <div className="flex items-center justify-center gap-10">
+                {/* Previous */}
+                <button
+                  onClick={prevSection}
+                  className="text-2xl hover:text-cyan-400 transition"
+                >
+                  ⏮
+                </button>
 
-            <button
-              onClick={stopSpeech}
-              className="bg-red-500 text-white px-4 py-2 rounded"
-            >
-              ⏹ Stop
-            </button>
-          </div>
+                {/* Big Play / Pause Toggle */}
+                <button
+                  onClick={handlePlayPause}
+                  className="w-16 h-16 flex items-center justify-center rounded-full bg-cyan-500 hover:bg-cyan-600 transition text-2xl shadow-lg"
+                >
+                  {isPlaying ? "⏸" : "▶"}
+                </button>
+
+                {/* Restart */}
+                <button
+                  onClick={restartSection}
+                  className="text-2xl hover:text-cyan-400 transition"
+                >
+                  🔄
+                </button>
+
+                {/* Next */}
+                <button
+                  onClick={nextSection}
+                  className="text-2xl hover:text-cyan-400 transition"
+                >
+                  ⏭
+                </button>
+              </div>
+
+              {/* Speed Controls */}
+              <div className="mt-6 text-center">
+                <p className="text-sm text-slate-400 mb-3">Playback Speed</p>
+
+                <div className="flex justify-center gap-3">
+                  {[0.75, 1, 1.25, 1.5].map((rate) => (
+                    <button
+                      key={rate}
+                      onClick={() => changeSpeed(rate)}
+                      className={`px-4 py-2 rounded-xl text-sm transition ${
+                        speed === rate
+                          ? "bg-cyan-500 text-white"
+                          : "bg-slate-800 hover:bg-slate-700"
+                      }`}
+                    >
+                      {rate}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
