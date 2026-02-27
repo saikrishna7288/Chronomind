@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useRef } from "react";
+
+import React, { useState, useRef, useEffect } from "react";
 import {
   Headphones,
   Upload,
@@ -86,9 +86,7 @@ const Home = () => {
         const cleaned = data.generatedText.replace(/[#*_`-]/g, "");
 
         // ✅ Split into sections
-        const split = cleaned.split("\n").filter((line) => line.trim() !== "");
-
-        setSections(split);
+        setSections([cleaned]);
         setCurrentIndex(0);
       } else {
         alert(data.message || "Error generating content");
@@ -128,24 +126,56 @@ const Home = () => {
         .trim()
     );
   };
+  
 
-  const speakSection = (index) => {
-    if (!sections[index]) return;
+useEffect(() => {
+  const loadVoices = () => {
+    const voices = window.speechSynthesis.getVoices();
+    console.log("Available voices:", voices);
+  };
 
-    window.speechSynthesis.cancel();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
+}, []);
+const speakSection = (index) => {
+  if (!sections[index]) return;
 
-    const utterance = new SpeechSynthesisUtterance(sections[index]);
+  const text = sections[index];
+
+  console.log("Speaking text length:", text.length);
+
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+
+  let i = 0;
+  console.log("FULL SECTION TEXT:");
+console.log(sections[index]);
+console.log("LENGTH:", sections[index].length);
+
+  const speakNext = () => {
+    if (i >= sentences.length) {
+      setIsPlaying(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(sentences[i]);
     utterance.rate = speed;
 
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      utterance.voice = voices[0];
+    }
+
     utterance.onend = () => {
-      setIsPlaying(false);
+      i++;
+      speakNext();
     };
 
-    utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-
-    setIsPlaying(true);
   };
+
+  speakNext();
+  setIsPlaying(true);
+};
   const togglePlay = () => {
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
