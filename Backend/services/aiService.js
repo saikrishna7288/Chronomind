@@ -1,49 +1,61 @@
 import axios from "axios";
 
-export const generateContent = async (topic, mode) => {
+export const generateContent = async (content) => {
 
-  let systemPrompt = `
+  const wordCount = content.trim().split(/\s+/).length;
+
+  let prompt = "";
+
+  // If user pasted large content → Summarize
+  if (wordCount > 100) {
+
+    prompt = `
 You are an expert teacher.
-Always respond in plain text only.
-Do NOT use markdown symbols like #, *, -, _, etc.
-Do NOT use special characters.
-Use simple English.
+
+Summarize the following content clearly.
+
+1. Give a short summary in 6-8 lines.
+2. Then list important key points.
+3. Use simple English.
+4. Do not use special symbols.
+5. Start directly with the content.
+
+Content:
+${content}
 `;
 
-  let userPrompt = "";
+  } else {
 
-  if (mode === "story") {
-    userPrompt = `
-Explain the topic "${topic}" as:
+    // If user entered keyword → Explain
 
-1. A short summary (5–8 lines)
-2. Then a detailed explanation in storytelling style
-3. Use real life examples
-4. Make it engaging like a teacher explaining in class
+    prompt = `
+You are an expert teacher.
+
+Explain the topic "${content}" clearly.
+
+1. Give a short introduction.
+2. Then explain in detail.
+3. Use real-life examples.
+4. Use simple English.
+5. Minimum 250 words.
+6. Do not use special symbols.
+7. Start directly with the content.
+
+Topic:
+${content}
 `;
-  }
 
-  if (mode === "chunks") {
-    userPrompt = `
-Explain the topic "${topic}" as:
-
-1. A short summary (5–8 lines)
-2. Then break into structured revision points
-3. Use numbered points instead of symbols
-4. Keep it crisp and exam-focused
-`;
   }
 
   const response = await axios.post(
     "https://router.huggingface.co/v1/chat/completions",
     {
-      model: "mistralai/Mistral-7B-Instruct-v0.2",
+      model: "meta-llama/Meta-Llama-3-8B-Instruct",
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        { role: "user", content: prompt }
       ],
-      max_tokens: 800,
-      temperature: 0.7
+      temperature: 0.7,
+      max_tokens: 1200
     },
     {
       headers: {
@@ -52,6 +64,13 @@ Explain the topic "${topic}" as:
       }
     }
   );
+  const aiText = response.data.choices[0].message.content;
 
-  return response.data.choices[0].message.content;
+  console.log("========== AI RESPONSE START ==========");
+  console.log(aiText);
+  console.log("========== AI RESPONSE END ==========");
+  console.log("Length:", aiText.length);
+
+  return aiText;
+  //return response.data.choices[0].message.content;
 };

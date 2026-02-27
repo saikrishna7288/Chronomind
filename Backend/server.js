@@ -23,6 +23,9 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/convert", convertRoutes);
+app.get("/", (req, res) => {
+  res.send("Server is working");
+});
 
 // Connect MongoDB
 mongoose.connect(process.env.MONGO_URI)
