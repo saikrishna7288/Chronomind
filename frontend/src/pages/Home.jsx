@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   Headphones,
@@ -11,13 +10,15 @@ import {
   Mic2,
   Clock,
   Music2,
+  UserCircle,
+  LogOut,
 } from "lucide-react";
 
 const Home = () => {
   const [activeFeature, setActiveFeature] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [topic, setTopic] = useState("");
-  const [file, setFile] = useState(null);
+  //const [file, setFile] = useState(null);
   const [generatedText, setGeneratedText] = useState("");
   const [loading, setLoading] = useState(false);
   const [sections, setSections] = useState([]);
@@ -27,15 +28,9 @@ const Home = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speechRate, setSpeechRate] = useState(1);
   const utteranceRef = useRef(null);
+  const [user, setUser] = useState(null);
 
   const features = [
-    {
-      icon: Upload,
-      title: "Upload Any Content",
-      description:
-        "Upload PDFs, DOCX, TXT or paste any topic to convert into audio.",
-      color: "from-cyan-400 to-blue-500",
-    },
     {
       icon: Sparkles,
       title: "AI Smart Structuring",
@@ -46,8 +41,14 @@ const Home = () => {
     {
       icon: Headphones,
       title: "Listen Anywhere",
-      description: "Stream or download and learn during commute or workouts.",
+      description: "Stream and learn during commute or workouts.",
       color: "from-amber-400 to-orange-500",
+    },
+    {
+      icon: Play,
+      title: "Audio Control",
+      description: "You can control the audio speed according to your wish",
+      color: "from-cyan-400 to-blue-500",
     },
   ];
   // 🚀 Generate Content from Backend
@@ -56,6 +57,12 @@ const Home = () => {
       alert("Please enter a topic");
       return;
     }
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+
+    setSections([]);
+    setGeneratedText("");
+    setCurrentIndex(0);
 
     try {
       setLoading(true);
@@ -126,56 +133,55 @@ const Home = () => {
         .trim()
     );
   };
-  
 
-useEffect(() => {
-  const loadVoices = () => {
-    const voices = window.speechSynthesis.getVoices();
-    console.log("Available voices:", voices);
-  };
-
-  window.speechSynthesis.onvoiceschanged = loadVoices;
-  loadVoices();
-}, []);
-const speakSection = (index) => {
-  if (!sections[index]) return;
-
-  const text = sections[index];
-
-  console.log("Speaking text length:", text.length);
-
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-
-  let i = 0;
-  console.log("FULL SECTION TEXT:");
-console.log(sections[index]);
-console.log("LENGTH:", sections[index].length);
-
-  const speakNext = () => {
-    if (i >= sentences.length) {
-      setIsPlaying(false);
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(sentences[i]);
-    utterance.rate = speed;
-
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      utterance.voice = voices[0];
-    }
-
-    utterance.onend = () => {
-      i++;
-      speakNext();
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      console.log("Available voices:", voices);
     };
 
-    window.speechSynthesis.speak(utterance);
-  };
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+  }, []);
+  useEffect(() => {
+  window.speechSynthesis.cancel();
+  setIsPlaying(false);
+}, [topic]);
+  const speakSection = (index) => {
+    if (!sections[index]) return;
 
-  speakNext();
-  setIsPlaying(true);
-};
+    const text = sections[index];
+
+    console.log("Speaking text length:", text.length);
+
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+
+    let i = 0;
+    const speakNext = () => {
+      if (i >= sentences.length) {
+        setIsPlaying(false);
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(sentences[i]);
+      utterance.rate = speed;
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        utterance.voice = voices[0];
+      }
+
+      utterance.onend = () => {
+        i++;
+        speakNext();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    speakNext();
+    setIsPlaying(true);
+  };
   const togglePlay = () => {
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
@@ -204,22 +210,22 @@ console.log("LENGTH:", sections[index].length);
     }
   };
   const changeSpeed = (rate) => {
-  setSpeed(rate);
+    setSpeed(rate);
 
-  if (isPlaying) {
-    window.speechSynthesis.cancel();
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(sections[currentIndex]);
-    utterance.rate = rate;
+      const utterance = new SpeechSynthesisUtterance(sections[currentIndex]);
+      utterance.rate = rate;
 
-    utterance.onend = () => {
-      setIsPlaying(false);
-    };
+      utterance.onend = () => {
+        setIsPlaying(false);
+      };
 
-    utteranceRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-  }
-};
+      utteranceRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
   const handlePlayPause = () => {
     if (isPlaying) {
       window.speechSynthesis.pause();
@@ -233,10 +239,31 @@ console.log("LENGTH:", sections[index].length);
       }
     }
   };
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch("http://localhost:5000/api/users/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        setUser(data);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
       {/* NAVIGATION */}
-      <nav className="px-6 py-6 flex justify-between items-center max-w-7xl mx-auto">
+      <nav className="px-1 py-10 flex justify-between items-center max-w-7xl mx-auto">
         {/* LEFT SIDE - Logo */}
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-br from-cyan-400 to-blue-500 p-2 rounded-2xl">
@@ -253,37 +280,57 @@ console.log("LENGTH:", sections[index].length);
             Features
           </a>
 
-          <a href="#how" className="text-slate-300 hover:text-cyan-400">
-            How It Works
-          </a>
-
           {/* Profile */}
           <div className="relative">
+            {/* Avatar Button */}
             <button
               onClick={() => setShowProfile(!showProfile)}
-              className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center font-bold"
+              className="w-10 h-10 rounded-full 
+               bg-gradient-to-r from-cyan-500 to-blue-600 
+               flex items-center justify-center 
+               text-white font-semibold 
+               hover:scale-105 transition-all duration-200 shadow-lg"
             >
-              SK
+              {user?.name?.charAt(0)?.toUpperCase() || "U"}
             </button>
 
             {showProfile && (
-              <div className="absolute right-0 mt-3 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-xl p-3 space-y-2">
-                <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 transition">
-                  My Profile
-                </button>
+              <div
+                className="absolute right-0 mt-3 w-60 
+                    bg-slate-900 border border-white/10 
+                    rounded-xl shadow-2xl p-3 
+                    animate-in fade-in zoom-in-95 
+                    duration-150 z-50"
+              >
+                {/* User Info Section */}
+                <div className="flex items-center gap-3 px-3 pb-3">
+                  <UserCircle className="w-10 h-10 text-cyan-400" />
 
-                <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 transition">
-                  Dashboard
-                </button>
+                  <div className="flex flex-col">
+                    <p className="text-xs text-gray-400">Signed in as</p>
+                    <p className="text-sm font-semibold text-white truncate">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
 
+                <div className="h-px bg-white/10 my-2"></div>
+
+                {/* Logout */}
                 <button
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-500/20 text-red-400 transition"
+                  className="w-full flex items-center gap-3 px-3 py-2 
+                   rounded-lg hover:bg-red-500/20 
+                   text-red-400 transition-all duration-200"
                   onClick={() => {
                     localStorage.removeItem("token");
                     window.location.href = "/";
                   }}
                 >
-                  Logout
+                  <LogOut className="w-5 h-5" />
+                  <span className="text-sm font-medium">Logout</span>
                 </button>
               </div>
             )}
@@ -311,42 +358,13 @@ console.log("LENGTH:", sections[index].length);
             Upload any topic and get engaging audio lessons instantly. Learn
             while driving, walking, or relaxing.
           </p>
-
-          <div className="flex gap-4">
-            <button className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl font-bold flex items-center gap-3 hover:scale-105 transition">
-              <Play className="w-5 h-5" />
-              Watch Demo
-            </button>
-          </div>
         </div>
 
         {/* RIGHT CARD */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-3xl p-5 shadow-2xl">
-          <h3 className="text-2xl font-bold mb-6">Quick Convert</h3>
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-3xl p-9 shadow-2xl">
+          <h3 className="text-2xl font-bold mb-6">Start Learning</h3>
 
           <div className="space-y-2">
-            {/* Upload Section */}
-            <label className="border-2 border-dashed border-slate-600 rounded-2xl p-5 text-center hover:border-cyan-500 transition cursor-pointer block">
-              <input
-                type="file"
-                className="hidden"
-                onChange={(e) => setFile(e.target.files[0])}
-              />
-
-              <FileText className="w-10 h-10 mx-auto mb-4 text-cyan-400" />
-              <p className="font-semibold">
-                {file ? file.name : "Drop your document here"}
-              </p>
-              <p className="text-sm text-slate-400">PDF, DOCX, TXT</p>
-            </label>
-
-            {/* OR Divider */}
-            <div className="flex items-center gap-4">
-              <div className="flex-1 h-px bg-slate-700"></div>
-              <span className="text-slate-400 text-sm">OR</span>
-              <div className="flex-1 h-px bg-slate-700"></div>
-            </div>
-
             {/* Topic Input */}
             <input
               type="text"
@@ -492,18 +510,9 @@ console.log("LENGTH:", sections[index].length);
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="px-6 py-20 text-center bg-gradient-to-r from-cyan-500 to-blue-600">
-        <h2 className="text-4xl font-bold mb-6">Ready to Learn Smarter?</h2>
-        <button className="px-10 py-4 bg-white text-blue-600 rounded-2xl font-bold hover:scale-105 transition flex items-center gap-3 mx-auto">
-          Start Free Trial
-          <Clock className="w-5 h-5" />
-        </button>
-      </section>
-
       {/* FOOTER */}
       <footer className="px-6 py-10 text-center text-slate-400 border-t border-white/10">
-        © 2026 SonicLearn. All rights reserved.
+        © 2026 Chronomind. All rights reserved.
       </footer>
     </div>
   );
