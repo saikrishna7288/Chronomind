@@ -65,12 +65,6 @@ ${content}
     }
   );
   const aiText = response.data.choices[0].message.content;
-
-  console.log("========== AI RESPONSE START ==========");
-  console.log(aiText);
-  console.log("========== AI RESPONSE END ==========");
-  console.log("Length:", aiText.length);
-
   return aiText;
   //return response.data.choices[0].message.content;
 };

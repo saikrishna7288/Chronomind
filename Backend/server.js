@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import convertRoutes from "./routes/convertRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 
 const app = express();
@@ -23,6 +24,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/convert", convertRoutes);
+app.use("/api/users", userRoutes);
 app.get("/", (req, res) => {
   res.send("Server is working");
 });
