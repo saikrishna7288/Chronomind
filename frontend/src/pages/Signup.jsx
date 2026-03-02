@@ -15,7 +15,7 @@ const Signup = () => {
 
     try {
       const res = await axios.post(
-        "https://chronomind-30ma.onrender.com/api/auth/Signup",
+        "https://chronomind-30ma.onrender.com/api/auth/signup",
         { name, email, password }
       );
 
