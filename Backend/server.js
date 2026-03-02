@@ -10,12 +10,14 @@ import userRoutes from "./routes/userRoutes.js";
 const app = express();
 
 // Middlewares
-app.use(
-  cors({
-    origin: "https://chronomind-eight.vercel.app",
-    credentials: true,
-  }),
-);
+app.use(cors({
+  origin: "https://chronomind-eight.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
+
+app.options("*", cors()); // <-- IMPORTANT
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 
