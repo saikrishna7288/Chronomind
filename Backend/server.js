@@ -11,14 +11,11 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: "https://chronomind-eight.vercel.app",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
+  origin: "https://chronomind-eight.vercel.app"
 }));
 
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 app.use("/api/auth", authRoutes);
 
 // Test Route
