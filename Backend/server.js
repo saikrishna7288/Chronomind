@@ -15,7 +15,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(cors());
 app.use("/api/auth", authRoutes);
 
 // Test Route
@@ -25,9 +24,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/convert", convertRoutes);
 app.use("/api/users", userRoutes);
-app.get("/", (req, res) => {
-  res.send("Server is working");
-});
+
 
 // Connect MongoDB
 mongoose
