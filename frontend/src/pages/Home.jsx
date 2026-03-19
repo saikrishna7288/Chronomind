@@ -512,7 +512,7 @@ const Home = () => {
 
       {/* FOOTER */}
       <footer className="px-6 py-10 text-center text-slate-400 border-t border-white/10">
-        © 2026 Chronomind. All rights reserved.
+        © 2026 Chronomind(CREATED BY PADAKANTI SAI KRISHNA). All rights reserved.
       </footer>
     </div>
   );
